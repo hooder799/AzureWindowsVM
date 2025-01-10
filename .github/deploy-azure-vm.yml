@@ -1,0 +1,41 @@
+name: Deploy Windows 10 VM to Azure
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Azure CLI
+      uses: azure/setup-azure@v1
+      with:
+        azure-cli-version: '2.28.0' # Use the latest stable version
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Create Resource Group
+      run: |
+        az group create --name myResourceGroup --location eastus
+
+    - name: Create Windows VM
+      run: |
+        az vm create \
+          --resource-group myResourceGroup \
+          --name MyWindowsVM \
+          --image win10-ads-gen2 \
+          --admin-username azureuser \
+          --admin-password ${{ secrets.AZURE_PASSWORD }} \
+          --size Standard_DS1_v2 \
+          --public-ip-sku Standard
+        
+    - name: Power on the VM
+      run: |
+        az vm start --resource-group myResourceGroup --name MyWindowsVM
